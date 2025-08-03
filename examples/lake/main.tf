@@ -52,9 +52,9 @@ module "lake" {
       enable_default_resource_group = false
       lake_account = [
         {
-          account_type     = "Super"
-          account_name     = "tfnormal"
-          account_password = "normal@2023"
+          account_type     = var.account_type
+          account_name     = var.account_name
+          account_password = var.account_password
         }
       ]
     }
