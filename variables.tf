@@ -93,17 +93,62 @@ variable "db_clusters" {
 
 variable "db_cluster_lake_versions" {
   type = list(object({
-    compute_resource   = string
-    db_cluster_version = string
-    payment_type       = string
-    storage_resource   = string
-    vpc_id             = string
-    vswitch_id         = string
-    zone_id            = string
+    compute_resource              = string
+    db_cluster_version            = string
+    payment_type                  = string
+    storage_resource              = string
+    vpc_id                        = string
+    vswitch_id                    = string
+    zone_id                       = string
+    security_ips                  = optional(string)
+    secondary_vswitch_id          = optional(string)
+    secondary_zone_id             = optional(string)
+    product_form                  = optional(string)
+    product_version               = optional(string)
+    reserved_node_count           = optional(string)
+    disk_encryption               = optional(bool)
+    kms_id                        = optional(string)
+    enable_ssl                    = optional(bool)
+    db_cluster_description        = optional(string)
+    resource_group_id             = optional(string)
+    period                        = optional(number)
+    enable_default_resource_group = optional(string)
+    source_db_cluster_id          = optional(string)
+    backup_set_id                 = optional(string)
+    restore_type                  = optional(string)
+    restore_to_time               = optional(string)
     lake_account = optional(list(object({
-      account_name     = string
-      account_password = string
+      account_name        = string
+      account_password    = string
+      account_description = optional(string)
+      account_type        = optional(string)
     })))
+  }))
+  default = []
+
+  validation {
+    condition     = alltrue([for a in var.db_cluster_lake_versions : true if a.product_version != null && contains(["BasicVersion", "EnterpriseVersion"], a.product_version)])
+    error_message = "Valid values are : BasicVersion, EnterpriseVersion."
+  }
+
+  validation {
+    condition     = alltrue([for b in var.db_cluster_lake_versions : true if b.product_form != null && contains(["IntegrationForm", "LegacyForm"], b.product_form)])
+    error_message = "Valid values are : IntegrationForm, LegacyForm."
+  }
+
+  validation {
+    condition     = alltrue([for c in var.db_cluster_lake_versions : true if c.payment_type != null && contains(["PayAsYouGo", "Subscription"], c.payment_type)])
+    error_message = "Valid values are : PayAsYouGo and Subscription."
+  }
+}
+
+variable "account_privilege" {
+  type = list(object({
+    privilege_type            = optional(string)
+    privileges                = optional(set(string))
+    privilege_object_table    = optional(string)
+    privilege_object_column   = optional(string)
+    privilege_object_database = optional(string)
   }))
   default = []
 }

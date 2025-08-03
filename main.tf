@@ -62,20 +62,52 @@ resource "alicloud_adb_resource_group" "this" {
 }
 
 resource "alicloud_adb_db_cluster_lake_version" "this" {
-  for_each           = { for cluster in var.db_cluster_lake_versions : cluster.db_cluster_version => cluster }
-  compute_resource   = each.value.compute_resource
-  db_cluster_version = each.value.db_cluster_version
-  payment_type       = each.value.payment_type
-  storage_resource   = each.value.storage_resource
-  vpc_id             = each.value.vpc_id
-  vswitch_id         = each.value.vswitch_id
-  zone_id            = each.value.zone_id
-
+  for_each                      = { for cluster in var.db_cluster_lake_versions : cluster.db_cluster_version => cluster }
+  compute_resource              = each.value.compute_resource
+  db_cluster_version            = each.value.db_cluster_version
+  payment_type                  = each.value.payment_type
+  storage_resource              = each.value.storage_resource
+  vpc_id                        = each.value.vpc_id
+  vswitch_id                    = each.value.vswitch_id
+  zone_id                       = each.value.zone_id
+  security_ips                  = each.value.security_ips
+  secondary_vswitch_id          = each.value.secondary_vswitch_id
+  secondary_zone_id             = each.value.secondary_zone_id
+  product_form                  = each.value.product_form
+  product_version               = each.value.product_version
+  reserved_node_count           = each.value.reserved_node_count
+  disk_encryption               = each.value.disk_encryption
+  kms_id                        = each.value.disk_encryption == true ? each.value.kms_id : null
+  enable_ssl                    = each.value.enable_ssl
+  db_cluster_description        = each.value.db_cluster_description
+  resource_group_id             = each.value.resource_group_id
+  period                        = each.value.period
+  enable_default_resource_group = each.value.enable_default_resource_group
+  source_db_cluster_id          = each.value.source_db_cluster_id
+  backup_set_id                 = each.value.backup_set_id
+  restore_type                  = each.value.restore_type
+  restore_to_time               = each.value.restore_to_time
 }
 
 resource "alicloud_adb_lake_account" "this" {
-  for_each         = { for cluster in var.db_cluster_lake_versions : cluster.db_cluster_version => cluster if contains(keys(cluster), "lake_account") && cluster.lake_account != null }
-  account_name     = lookup(each.value, "account_name")
-  account_password = lookup(each.value, "account_password")
-  db_cluster_id    = alicloud_adb_db_cluster_lake_version.this[each.key].id
+  for_each            = { for cluster in var.db_cluster_lake_versions : cluster.db_cluster_version => cluster if contains(keys(cluster), "lake_account") && cluster.lake_account != null }
+  account_name        = lookup(each.value, "account_name")
+  account_password    = lookup(each.value, "account_password")
+  db_cluster_id       = alicloud_adb_db_cluster_lake_version.this[each.key].id
+  account_description = lookup(each.value, "account_description")
+  account_type        = lookup(each.value, "account_type")
+
+  dynamic "account_privileges" {
+    for_each = try(var.account_privilege) != null ? [""] : []
+    content {
+      privilege_type = lookup(each.value, "privilege_type")
+      privileges     = lookup(each.value, "privileges")
+
+      privilege_object {
+        table    = lookup(each.value, "table")
+        column   = lookup(each.value, "column")
+        database = lookup(each.value, "database")
+      }
+    }
+  }
 }
